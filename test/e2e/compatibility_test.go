@@ -63,7 +63,7 @@ const sliTriggeredEvent = `
           "response_time_p95",
           "some_other_metric"
         ],
-        "sliProvider": "keptn-service-template-go",
+        "sliProvider": "keptn-gitea-provisioner-service",
         "start": "2021-01-15T15:04:45.000Z"
       },
       "labels": null,
@@ -120,7 +120,7 @@ func Test_ActionTriggered(t *testing.T) {
 		func(_ *models.KeptnContextExtendedCE) bool {
 			return true
 		},
-		"keptn-service-template-go",
+		"keptn-gitea-provisioner-service",
 	)
 
 	// Checking if the service-template-go responded with a .finished event
@@ -133,7 +133,7 @@ func Test_ActionTriggered(t *testing.T) {
 		func(_ *models.KeptnContextExtendedCE) bool {
 			return true
 		},
-		"keptn-service-template-go",
+		"keptn-gitea-provisioner-service",
 	)
 }
 
@@ -175,7 +175,7 @@ func Test_SLITriggered(t *testing.T) {
 		func(_ *models.KeptnContextExtendedCE) bool {
 			return true
 		},
-		"keptn-service-template-go",
+		"keptn-gitea-provisioner-service",
 	)
 
 	// Checking if the service-template-go responded with a .finished event
@@ -188,6 +188,6 @@ func Test_SLITriggered(t *testing.T) {
 		func(_ *models.KeptnContextExtendedCE) bool {
 			return true
 		},
-		"keptn-service-template-go",
+		"keptn-gitea-provisioner-service",
 	)
 }
