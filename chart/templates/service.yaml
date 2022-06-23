@@ -8,8 +8,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 8080
+    - name: http
+      port: 80
       protocol: TCP
+      targetPort: 8080
   selector:
     {{- include "keptn-service.selectorLabels" . | nindent 4 }}
-  {{- end }}
+{{- end }}

@@ -16,23 +16,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        keptn-version: ["0.14.2", "0.15.0"] # https://github.com/keptn/keptn/releases
+        keptn-version: ["0.16.0"] # https://github.com/keptn/keptn/releases
     env:
+      GO_VERSION: 1.17
       GO111MODULE: "on"
       ENABLE_E2E_TEST: true
       BRANCH: ${{ github.head_ref || github.ref_name }}
       KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      GITEA_ADMIN_USERNAME: GiteaAdmin
     steps:
-      - name: Checkout keptn-contrib/keptn-service-template-go
+      - name: Check out code.
         uses: actions/checkout@v3.0.2
-        with:
-          repository: keptn-sandbox/keptn-service-template-go
-          path: keptn-service-template-go
 
-      - name: Install Go
+      - name: Setup Go
         uses: actions/setup-go@v3.2.0
         with:
           go-version-file: "go.mod"
+
+      - name: Install gotestsum
+        shell: bash
+        run: go install gotest.tools/gotestsum@latest
 
       # Download artifacts from last CI run
       - name: Download artifacts
@@ -76,11 +79,39 @@ jobs:
         run: |
           curl -X GET "${{ steps.install_keptn.outputs.KEPTN_ENDPOINT }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
 
+      - name: Generate Gitea credentials
+        id: gitea_credentials
+        run: |
+          password=$(date +%s | sha256sum | base64 | head -c 32 ; echo)
+          echo "::add-mask::$password"
+          echo "::set-output name=GITEA_ADMIN_PASSWORD::$password"
+
+      - name: Install Gitea
+        env:
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.GITEA_ADMIN_PASSWORD }}
+        run: |
+          helm repo add gitea-charts https://dl.gitea.io/charts/
+          helm repo update
+          helm install gitea gitea-charts/gitea \
+            --set memcached.enabled=false \
+            --set postgresql.enabled=false \
+            --set gitea.config.database.DB_TYPE=sqlite3 \
+            --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+            --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
+            --set gitea.config.server.OFFLINE_MODE=true \
+            --set gitea.config.server.ROOT_URL=http://gitea-http.default:3000/ \
+            --wait
+
       # Install Keptn-Service-Template-Go from downloaded helm chart
       - name: Install Keptn-Service-Template-Go
+        env:
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.GITEA_ADMIN_PASSWORD }}
         run: |
-          helm upgrade --install --create-namespace -n keptn keptn-service-template-go \
-            ./dist/helm-charts/keptn-service-template-go-*.tgz \
+          helm upgrade --install keptn-gitea-provisioner-service \
+            ./dist/helm-charts/keptn-gitea-provisioner-service*.tgz \
+            --set gitea.admin.create=true \
+            --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+            --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
             --wait
 
       - name: Run integration tests
@@ -88,5 +119,23 @@ jobs:
           KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_ENDPOINT }}
           KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
         shell: bash
-        working-directory: keptn-service-template-go
-        run: go test -race -v ./...
+        run: |
+          gotestsum ./test/e2e/...
+
+      - name: Dump k8s debug info
+        if: always()
+        run: |
+          mkdir k8s_debug
+          kubectl describe nodes > k8s_debug/k8s_describe_nodes.txt
+          kubectl cluster-info dump > k8s_debug/k8s_cluster_info_dump.txt
+          kubectl get configmaps,deployments,pods,networkpolicy,serviceaccounts,role,rolebindings,events -o json > k8s_debug/k8s_objects.json
+          kubectl describe deployment/keptn-gitea-provisioner-service > k8s_debug/k8s_describe.txt
+          kubectl logs deployment/keptn-gitea-provisioner-service --prefix=true --previous=false --all-containers > k8s_debug/k8s_logs.txt
+
+      # Upload the k8s debug archive, so we can use it for investigating
+      - name: Upload k8s debug archive
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: k8s-debug-archive
+          path: k8s_debug/
