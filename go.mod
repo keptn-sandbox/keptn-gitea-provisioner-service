@@ -1,4 +1,4 @@
-module example.com/keptn-service-template-go
+module github.com/keptn-sandbox/keptn-gitea-provisioner-service
 
 go 1.17
 
