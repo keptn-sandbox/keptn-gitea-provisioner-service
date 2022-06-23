@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        keptn-version: ["0.14.2", "0.15.0"] # https://github.com/keptn/keptn/releases
+        keptn-version: ["0.16.0"] # https://github.com/keptn/keptn/releases
     env:
       GO111MODULE: "on"
       ENABLE_E2E_TEST: true

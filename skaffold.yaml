@@ -4,26 +4,24 @@ build:
   local:
     useBuildkit: true
   artifacts:
-    - image: ghcr.io/keptn-sandbox/keptn-gitea-provisioner-service # Todo: Replace this with your image name
+    - image: ghcr.io/keptn-sandbox/keptn-gitea-provisioner-service
       docker:
         dockerfile: Dockerfile
-        buildArgs:
-          debugBuild: true
 deploy:
   helm:
     flags:
       upgrade: ["--reuse-values", "--install"]
     releases:
       - name: keptn-gitea-provisioner-service
-        namespace: keptn
+        namespace: default
         artifactOverrides:
-          image: ghcr.io/keptn-sandbox/keptn-gitea-provisioner-service # Todo: Replace this with your image name
+          image: ghcr.io/keptn-sandbox/keptn-gitea-provisioner-service
         imageStrategy:
           helm: { }
         overrides:
           distributor:
             image:
-              tag: 0.14.1
+              tag: 0.16.0
           resources:
             limits:
               memory: 512Mi

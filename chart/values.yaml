@@ -2,46 +2,41 @@ image:
   repository: ghcr.io/keptn-sandbox/keptn-gitea-provisioner-service # Container Image Name
   pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
   tag: ""                                    # Container Tag
+
 service:
   enabled: true                              # Creates a Kubernetes Service for the keptn-gitea-provisioner-service
 
-distributor:
-  stageFilter: ""                            # Sets the stage this helm service belongs to
-  serviceFilter: ""                          # Sets the service this helm service belongs to
-  projectFilter: ""                          # Sets the project this helm service belongs to
-  pubsubTopic: "sh.keptn.>"                  # Sets the events the service subscribes to
-  image:
-    repository: docker.io/keptn/distributor  # Container Image Name
-    pullPolicy: IfNotPresent                 # Kubernetes Image Pull Policy
-    tag: "0.14.1"                            # Container Tag
-  config:
-    queueGroup:
-      enabled: true                          # Enable connection via Nats queue group to support exactly-once message processing
-
-remoteControlPlane:
-  enabled: false                             # Enables remote execution plane mode
-  api:
-    protocol: "http"                        # Used Protocol (http, https)
-    hostname: ""                            # Hostname of the control plane cluster (and Port)
-    apiValidateTls: true                     # Defines if the control plane certificate should be validated
-    token: ""                                # Keptn API Token
+gitea:
+  endpoint: "http://gitea-http.default:3000/"
+  admin:
+    create: false
+    username: ""
+    password: ""
+  options:
+    usernamePrefix: ""
+    userEmailDomain: ""
+    projectPrefix: ""
+    tokenPrefix: ""
 
 imagePullSecrets: []                         # Secrets to use for container registry credentials
 
-serviceAccount:
-  create: true                               # Enables the service account creation
-  annotations: {}                            # Annotations to add to the service account
-  name: ""                                   # The name of the service account to use.
-
 podAnnotations: {}                           # Annotations to add to the created pods
 
-podSecurityContext: {}                       # Set the pod security context (e.g. fsGroups)
-  # fsGroup: 2000
+podSecurityContext:                         # Set the pod security context (e.g. fsGroups)
+  runAsUser: 1000
+  runAsGroup: 2000
 
-securityContext: {}                          # Set the security context (e.g. runAsUser)
-#  readOnlyRootFilesystem: true
-#  runAsNonRoot: true
-#  runAsUser: 1000
+securityContext:                            # Set the security context (e.g. runAsUser)
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 2000
+  capabilities:
+    drop: [ "all" ]
+  seccompProfile:
+    type: RuntimeDefault
 
 resources:                                 # Resource limits and requests
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -52,8 +47,11 @@ resources:                                 # Resource limits and requests
   #   cpu: 100m
   #   memory: 128Mi
   requests:
-     cpu: 100m
-     memory: 128Mi
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
 
 nodeSelector: {}                                # Node selector configuration
 
