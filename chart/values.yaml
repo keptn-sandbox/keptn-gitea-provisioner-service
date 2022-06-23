@@ -1,9 +1,9 @@
 image:
-  repository: ghcr.io/keptn-sandbox/keptn-service-template-go # Container Image Name
+  repository: ghcr.io/keptn-sandbox/keptn-gitea-provisioner-service # Container Image Name
   pullPolicy: IfNotPresent                   # Kubernetes Image Pull Policy
   tag: ""                                    # Container Tag
 service:
-  enabled: true                              # Creates a Kubernetes Service for the keptn-service-template-go
+  enabled: true                              # Creates a Kubernetes Service for the keptn-gitea-provisioner-service
 
 distributor:
   stageFilter: ""                            # Sets the stage this helm service belongs to

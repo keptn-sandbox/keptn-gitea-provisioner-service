@@ -4,7 +4,7 @@ build:
   local:
     useBuildkit: true
   artifacts:
-    - image: ghcr.io/keptn-sandbox/keptn-service-template-go # Todo: Replace this with your image name
+    - image: ghcr.io/keptn-sandbox/keptn-gitea-provisioner-service # Todo: Replace this with your image name
       docker:
         dockerfile: Dockerfile
         buildArgs:
@@ -14,10 +14,10 @@ deploy:
     flags:
       upgrade: ["--reuse-values", "--install"]
     releases:
-      - name: keptn-service-template-go
+      - name: keptn-gitea-provisioner-service
         namespace: keptn
         artifactOverrides:
-          image: ghcr.io/keptn-sandbox/keptn-service-template-go # Todo: Replace this with your image name
+          image: ghcr.io/keptn-sandbox/keptn-gitea-provisioner-service # Todo: Replace this with your image name
         imageStrategy:
           helm: { }
         overrides:
