@@ -18,6 +18,7 @@ jobs:
       matrix:
         keptn-version: ["0.16.0"] # https://github.com/keptn/keptn/releases
     env:
+      GO_VERSION: 1.17
       GO111MODULE: "on"
       ENABLE_E2E_TEST: true
       BRANCH: ${{ github.head_ref || github.ref_name }}
@@ -25,16 +26,17 @@ jobs:
       GITEA_ADMIN_USERNAME: MyAwesomeGiteaAdmin
       GITEA_ADMIN_PASSWORD: AReallyAwesomeGiteaPassword
     steps:
-      - name: Checkout keptn-contrib/keptn-service-template-go
+      - name: Check out code.
         uses: actions/checkout@v3.0.2
-        with:
-          repository: keptn-sandbox/keptn-service-template-go
-          path: keptn-service-template-go
 
-      - name: Install Go
+      - name: Setup Go
         uses: actions/setup-go@v3.2.0
         with:
           go-version-file: "go.mod"
+
+      - name: Install gotestsum
+        shell: bash
+        run: go install gotest.tools/gotestsum@latest
 
       # Download artifacts from last CI run
       - name: Download artifacts
@@ -107,4 +109,5 @@ jobs:
           KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
         shell: bash
         working-directory: keptn-service-template-go
-        run: go test -race -v ./...
+        run: |
+          gotestsum ./test/e2e/...
