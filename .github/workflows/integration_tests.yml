@@ -22,6 +22,8 @@ jobs:
       ENABLE_E2E_TEST: true
       BRANCH: ${{ github.head_ref || github.ref_name }}
       KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+      GITEA_ADMIN_USERNAME: MyAwesomeGiteaAdmin
+      GITEA_ADMIN_PASSWORD: AReallyAwesomeGiteaPassword
     steps:
       - name: Checkout keptn-contrib/keptn-service-template-go
         uses: actions/checkout@v3.0.2
@@ -76,11 +78,27 @@ jobs:
         run: |
           curl -X GET "${{ steps.install_keptn.outputs.KEPTN_ENDPOINT }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
 
+      - name: Install Gitea
+        run: |
+          helm repo add gitea-charts https://dl.gitea.io/charts/
+          helm repo update
+          helm install gitea gitea-charts/gitea \
+            --set memcached.enabled=false \
+            --set postgresql.enabled=false \
+            --set gitea.config.database.DB_TYPE=sqlite3 \
+            --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+            --set gitea.admin.password=${AReallyAwesomeGiteaPassword} \
+            --set gitea.config.server.OFFLINE_MODE=true \
+            --set gitea.config.server.ROOT_URL=http://gitea-http.default:3000/
+
       # Install Keptn-Service-Template-Go from downloaded helm chart
       - name: Install Keptn-Service-Template-Go
         run: |
-          helm upgrade --install --create-namespace -n keptn keptn-service-template-go \
+          helm upgrade --install keptn-service-template-go \
             ./dist/helm-charts/keptn-service-template-go-*.tgz \
+            --set admin.create=true \
+            --set admin.username=${GITEA_ADMIN_USERNAME} \
+            --set admin.password=${GITEA_ADMIN_PASSWORD} \
             --wait
 
       - name: Run integration tests

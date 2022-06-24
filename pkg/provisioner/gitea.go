@@ -19,12 +19,25 @@ const DefaultKeptnNamespace = "keptn"
 // DefaultUserEmailDomain is the default E-Mail domain used for users
 const DefaultUserEmailDomain = "keptn-gitea-auto-provisioner.local"
 
+// GiteaClient represents the interface of the Gitea client that is needed for the provisioner
+type GiteaClient interface {
+	GetUserInfo(user string) (*gitea.User, *gitea.Response, error)
+	AdminCreateUser(opt gitea.CreateUserOption) (*gitea.User, *gitea.Response, error)
+	AdminCreateRepo(username string, opt gitea.CreateRepoOption) (*gitea.Repository, *gitea.Response, error)
+	DeleteRepo(username string, repository string) (*gitea.Response, error)
+	CreateAccessToken(opt gitea.CreateAccessTokenOption) (*gitea.AccessToken, *gitea.Response, error)
+	DeleteAccessToken(value interface{}) (*gitea.Response, error)
+}
+
+//go:generate mockgen -destination=fake/gitea_mock.go -package=fake . GiteaClient
+
 // The GiteaProvisioner structure implements the Provisioner interface and provides functionality for creating, deleting
 // the different resources in a Gitea
 type GiteaProvisioner struct {
 	endpoint        string
 	credentials     gitea.ClientOption
-	client          *gitea.Client
+	client          GiteaClient
+	newClientFunc   func(url string, options ...gitea.ClientOption) (GiteaClient, error)
 	UsernamePrefix  string
 	UserEmailDomain string
 	ProjectPrefix   string
@@ -37,20 +50,30 @@ type GiteaProvisionerOptions struct {
 	UserEmailDomain string
 	ProjectPrefix   string
 	TokenPrefix     string
+	ClientBuilder   func(url string, options ...gitea.ClientOption) (GiteaClient, error)
 }
 
 // NewGiteaProvisioner creates a new gitea provisioner service with the given credentials and options
 func NewGiteaProvisioner(giteaEndpoint string, adminUsername string, adminPassword string, options *GiteaProvisionerOptions) (*GiteaProvisioner, error) {
+	clientBuilder := func(url string, options ...gitea.ClientOption) (GiteaClient, error) {
+		return gitea.NewClient(url, options...)
+	}
+
+	if options.ClientBuilder != nil {
+		clientBuilder = options.ClientBuilder
+	}
+
 	clientCredentials := gitea.SetBasicAuth(adminUsername, adminPassword)
-	giteaClient, err := gitea.NewClient(giteaEndpoint, clientCredentials)
+	giteaClient, err := clientBuilder(giteaEndpoint, clientCredentials)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create Gitea Client: %w", err)
 	}
 
 	provisioner := GiteaProvisioner{
-		endpoint:    giteaEndpoint,
-		credentials: clientCredentials,
-		client:      giteaClient,
+		endpoint:      giteaEndpoint,
+		credentials:   clientCredentials,
+		client:        giteaClient,
+		newClientFunc: clientBuilder,
 	}
 
 	// If options are set, apply them to the provisioner
@@ -99,15 +122,22 @@ func (h *GiteaProvisioner) CreateUser(namespace string) (string, error) {
 		if err != nil && r == nil {
 			return "", fmt.Errorf("unable to create user %s: %w", username, err)
 		}
+
+		// Possible status codes: 400, 403, 422
+		if r.StatusCode != http.StatusCreated {
+			return "", fmt.Errorf("unable to create user %s, received unexpected status code: %d",
+				username, r.StatusCode,
+			)
+		}
 	}
 
 	return username, nil
 }
 
-// CreateToken creates a access token that has read/write privileges for the given project
+// CreateToken creates an access token that has read/write privileges for the given project
 func (h *GiteaProvisioner) CreateToken(namespace string, project string) (string, error) {
 	// Note: we must change the client to use a different user:
-	userClient, err := gitea.NewClient(h.endpoint, h.credentials, gitea.SetSudo(h.GetUsername(namespace)))
+	userClient, err := h.newClientFunc(h.endpoint, h.credentials, gitea.SetSudo(h.GetUsername(namespace)))
 	if err != nil {
 		return "", fmt.Errorf("unable to create gitea client: %w", err)
 	}
@@ -151,7 +181,7 @@ func (h *GiteaProvisioner) CreateRepository(namespace string, project string) (s
 
 	// Error while talking to gitea, upstream failed or something else
 	if err != nil && r == nil {
-		return "", fmt.Errorf("unable to create project %s: %w", projectName, err)
+		return "", fmt.Errorf("unable to create project \"%s\": %w", projectName, err)
 	}
 
 	// Project already exists, relay the status code only
@@ -159,6 +189,7 @@ func (h *GiteaProvisioner) CreateRepository(namespace string, project string) (s
 		return "", ErrRepositoryAlreadyExists
 	}
 
+	// Possible status codes: 403, 404, 422
 	if r.StatusCode != http.StatusCreated {
 		return "", fmt.Errorf(
 			"recieved unexpected status code %d while creating repository %s for namespace %s",
@@ -207,7 +238,7 @@ func (h *GiteaProvisioner) DeleteRepository(namespace string, project string) er
 	}
 
 	// Note: to delete a access token we have to use sudo mode:
-	userClient, err := gitea.NewClient(h.endpoint, h.credentials, gitea.SetSudo(username))
+	userClient, err := h.newClientFunc(h.endpoint, h.credentials, gitea.SetSudo(username))
 	if err != nil {
 		return fmt.Errorf("unable create gitea client: %w", err)
 	}
@@ -225,8 +256,12 @@ func (h *GiteaProvisioner) DeleteRepository(namespace string, project string) er
 // the creation of needed resources such as users and access tokens.
 func (h *GiteaProvisioner) ProvisionRepository(namespace string, project string) (*ProvisionResponse, error) {
 
+	if project == "" {
+		return nil, fmt.Errorf("unable to create project with an empty name")
+	}
+
 	if _, err := h.CreateUser(namespace); err != nil {
-		return nil, fmt.Errorf("Unable to create user: %s\n", err.Error())
+		return nil, fmt.Errorf("unable to create user: %s\n", err.Error())
 	}
 
 	repository, err := h.CreateRepository(namespace, project)

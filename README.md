@@ -63,7 +63,7 @@ just create the kubernetes secret.
   NAMESPACE=default
   
   helm upgrade -n keptn keptn \
-    --set "control-plane.features.automaticProvisioningURL=http://keptn-gitea-provisioner.${NAMESPACE}"
+    --set "control-plane.features.automaticProvisioningURL=http://keptn-gitea-provisioner-service.${NAMESPACE}"
   ```
 
 ### Deploy in your Kubernetes cluster

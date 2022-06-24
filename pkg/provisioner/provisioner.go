@@ -86,6 +86,8 @@ func (p *ProvisionHandler) handleProvisionRepository(w http.ResponseWriter, req 
 		return
 	}
 
+	log.Printf("Provisioning repository \"%s\" for namespace \"%s\"\n", request.Project, request.Namespace)
+
 	response, err := p.Provisioner.ProvisionRepository(request.Namespace, request.Project)
 	if err != nil {
 		if errors.Is(err, ErrRepositoryAlreadyExists) {
@@ -104,8 +106,6 @@ func (p *ProvisionHandler) handleProvisionRepository(w http.ResponseWriter, req 
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	log.Printf("Successfully provisioned repo %s in namespace %s\n", request.Project, request.Namespace)
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
