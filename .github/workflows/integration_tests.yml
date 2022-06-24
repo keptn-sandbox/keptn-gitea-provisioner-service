@@ -96,8 +96,8 @@ jobs:
       # Install Keptn-Service-Template-Go from downloaded helm chart
       - name: Install Keptn-Service-Template-Go
         run: |
-          helm upgrade --install keptn-service-template-go \
-            ./dist/helm-charts/keptn-service-template-go-*.tgz \
+          helm upgrade --install keptn-gitea-provisioner-service \
+            ./dist/helm-charts/keptn-gitea-provisioner-service*.tgz \
             --set admin.create=true \
             --set admin.username=${GITEA_ADMIN_USERNAME} \
             --set admin.password=${GITEA_ADMIN_PASSWORD} \
