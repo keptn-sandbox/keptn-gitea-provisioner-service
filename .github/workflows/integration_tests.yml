@@ -119,7 +119,6 @@ jobs:
           KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_ENDPOINT }}
           KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
         shell: bash
-        working-directory: keptn-service-template-go
         run: |
           gotestsum ./test/e2e/...
 
