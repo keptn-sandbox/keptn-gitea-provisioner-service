@@ -89,9 +89,10 @@ jobs:
             --set postgresql.enabled=false \
             --set gitea.config.database.DB_TYPE=sqlite3 \
             --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
-            --set gitea.admin.password=${AReallyAwesomeGiteaPassword} \
+            --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
             --set gitea.config.server.OFFLINE_MODE=true \
-            --set gitea.config.server.ROOT_URL=http://gitea-http.default:3000/
+            --set gitea.config.server.ROOT_URL=http://gitea-http.default:3000/ \
+            --wait
 
       # Install Keptn-Service-Template-Go from downloaded helm chart
       - name: Install Keptn-Service-Template-Go
@@ -111,3 +112,20 @@ jobs:
         working-directory: keptn-service-template-go
         run: |
           gotestsum ./test/e2e/...
+
+      - name: Dump k8s debug info
+        if: always()
+        run: |
+          mkdir k8s_debug
+          kubectl describe nodes > k8s_debug/k8s_describe_nodes.txt
+          kubectl cluster-info dump > k8s_debug/k8s_cluster_info_dump.txt
+          kubectl get configmaps,deployments,pods,networkpolicy,serviceaccounts,role,rolebindings,events -n ${JES_NAMESPACE} -o json > k8s_debug/k8s_jes_objects.json
+          kubectl logs -n ${JES_NAMESPACE} deployment/job-executor-service --prefix=true --previous=false --all-containers > k8s_debug/k8s_jes_logs.txt
+
+      # Upload the k8s debug archive, so we can use it for investigating
+      - name: Upload k8s debug archive
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: k8s-debug-archive
+          path: k8s_debug/
