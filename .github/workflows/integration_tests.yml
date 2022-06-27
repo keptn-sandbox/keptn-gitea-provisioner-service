@@ -21,9 +21,11 @@ jobs:
       GO_VERSION: 1.17
       GO111MODULE: "on"
       ENABLE_E2E_TEST: true
+      KEPTN_VERSION: ${{ matrix.keptn-version }}
       BRANCH: ${{ github.head_ref || github.ref_name }}
       KUBECONFIG: /etc/rancher/k3s/k3s.yaml
       GITEA_ADMIN_USERNAME: GiteaAdmin
+      GITEA_NAMESPACE: gitea
     steps:
       - name: Check out code.
         uses: actions/checkout@v3.0.2
@@ -92,27 +94,39 @@ jobs:
         run: |
           helm repo add gitea-charts https://dl.gitea.io/charts/
           helm repo update
-          helm install gitea gitea-charts/gitea \
+          helm install -n ${GITEA_NAMESPACE} gitea gitea-charts/gitea \
+            --create-namespace \
             --set memcached.enabled=false \
             --set postgresql.enabled=false \
             --set gitea.config.database.DB_TYPE=sqlite3 \
             --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
             --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
             --set gitea.config.server.OFFLINE_MODE=true \
-            --set gitea.config.server.ROOT_URL=http://gitea-http.default:3000/ \
+            --set gitea.config.server.ROOT_URL=http://gitea-http.${GITEA_NAMESPACE}:3000/ \
             --wait
 
-      # Install Keptn-Service-Template-Go from downloaded helm chart
-      - name: Install Keptn-Service-Template-Go
+      # Install provisioner service from downloaded helm chart
+      - name: Install Provisioner Service
         env:
           GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.GITEA_ADMIN_PASSWORD }}
         run: |
           helm upgrade --install keptn-gitea-provisioner-service \
             ./dist/helm-charts/keptn-gitea-provisioner-service*.tgz \
+            --set gitea.endpoint=http://gitea-http.${GITEA_NAMESPACE}:3000/ \
             --set gitea.admin.create=true \
             --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
             --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
             --wait
+
+      - name: Use Provisioner Service in Keptn
+        run: |
+          # get keptn helm chart
+          helm repo add keptn https://charts.keptn.sh
+          helm repo update
+  
+          # reconfigure Keptn installation (Todo: This should eventually be part of the  keptn-sandbox/action-install-keptn action)
+          helm upgrade --install keptn keptn/keptn -n keptn --create-namespace --version=$KEPTN_VERSION --reuse-values \
+            --set=control-plane.features.automaticProvisioningURL=http://keptn-gitea-provisioner-service.default
 
       - name: Run integration tests
         env:
