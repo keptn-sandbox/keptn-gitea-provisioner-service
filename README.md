@@ -34,7 +34,7 @@ instance:
     
   ```
   
-  *Note*: You can re-use by omitting the set parameters of the helm installation
+  *Note*: You can re-use existing credentials by omitting the set parameters of the helm installation
 
 
 * If there is no Gitea instance installed, an appropriate instance can be created with the following bash script, otherwise it's sufficient to 
@@ -97,63 +97,6 @@ To delete a deployed *keptn-gitea-provisioner-service*, use the file `deploy/*.y
 ```console
 helm uninstall -n keptn keptn-gitea-provisioner-service
 ```
-
-## Development
-
-Development can be conducted using any GoLang compatible IDE/editor (e.g., Jetbrains GoLand, VSCode with Go plugins).
-
-It is recommended to make use of branches as follows:
-
-* `main` contains the latest potentially unstable version
-* `release-*` contains a stable version of the service (e.g., `release-0.1.0` contains version 0.1.0)
-* create a new branch for any changes that you are working on, e.g., `feature/my-cool-stuff` or `bug/overflow`
-* once ready, create a pull request from that branch back to the `main`/`master` branch
-
-When writing code, it is recommended to follow the coding style suggested by the [Golang community](https://github.com/golang/go/wiki/CodeReviewComments).
-
-### Common tasks
-
-* Build the binary: `go build -ldflags '-linkmode=external' -v -o keptn-gitea-provisioner-service`
-* Run tests: `go test -race -v ./...`
-* Build the docker image: `docker build . -t keptn-sandbox/keptn-gitea-provisioner-service:dev` (Note: Ensure that you use the correct DockerHub account/organization)
-* Run the docker image locally: `docker run --rm -it -p 8080:8080 keptn-sandbox/keptn-gitea-provisioner-service:dev`
-* Push the docker image to DockerHub: `docker push keptn-sandbox/keptn-gitea-provisioner-service:dev` (Note: Ensure that you use the correct DockerHub account/organization)
-* Deploy the service using `kubectl`: `kubectl apply -f deploy/`
-* Delete/undeploy the service using `kubectl`: `kubectl delete -f deploy/`
-* Watch the deployment using `kubectl`: `kubectl -n keptn get deployment keptn-gitea-provisioner-service -o wide`
-* Get logs using `kubectl`: `kubectl -n keptn logs deployment/keptn-gitea-provisioner-service -f`
-* Watch the deployed pods using `kubectl`: `kubectl -n keptn get pods -l run=keptn-gitea-provisioner-service`
-* Deploy the service using [Skaffold](https://skaffold.dev/): `skaffold run --default-repo=your-docker-registry --tail` (Note: Replace `your-docker-registry` with your container image registry (defaults to ghcr.io/keptn-sandbox/keptn-gitea-provisioner-service); also make sure to adapt the image name in [skaffold.yaml](skaffold.yaml))
-
-
-## Automation
-
-### GitHub Actions: Automated Pull Request Review
-
-This repo uses [reviewdog](https://github.com/reviewdog/reviewdog) for automated reviews of Pull Requests. 
-
-You can find the details in [.github/workflows/reviewdog.yml](.github/workflows/reviewdog.yml).
-
-### GitHub Actions: Unit Tests
-
-This repo has automated unit tests for pull requests. 
-
-You can find the details in [.github/workflows/CI.yml](.github/workflows/CI.yml).
-
-### GH Actions/Workflow: Build Docker Images
-
-This repo uses GH Actions and Workflows to test the code and automatically build docker images.
-
-Docker Images are automatically pushed based on the configuration done in [.ci_env](.ci_env) and the two [GitHub Secrets](https://github.com/keptn-sandbox/keptn-gitea-provisioner-service/settings/secrets/actions)
-* `REGISTRY_USER` - your DockerHub username
-* `REGISTRY_PASSWORD` - a DockerHub [access token](https://hub.docker.com/settings/security) (alternatively, your DockerHub password)
-
-## How to release a new version of this service
-
-It is assumed that the current development takes place in the `main` branch (either via Pull Requests or directly).
-
-Once you're ready, go to the Actions tab on GitHub, select Pre-Release or Release, and run the action.
-
 
 ## License
 

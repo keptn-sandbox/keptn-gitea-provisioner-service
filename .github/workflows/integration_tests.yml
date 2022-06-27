@@ -101,7 +101,7 @@ jobs:
             --set admin.create=true \
             --set admin.username=${GITEA_ADMIN_USERNAME} \
             --set admin.password=${GITEA_ADMIN_PASSWORD} \
-            --wait
+            --wait --debug
 
       - name: Run integration tests
         env:
