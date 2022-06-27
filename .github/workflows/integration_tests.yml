@@ -23,8 +23,7 @@ jobs:
       ENABLE_E2E_TEST: true
       BRANCH: ${{ github.head_ref || github.ref_name }}
       KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-      GITEA_ADMIN_USERNAME: MyAwesomeGiteaAdmin
-      GITEA_ADMIN_PASSWORD: AReallyAwesomeGiteaPassword
+      GITEA_ADMIN_USERNAME: GiteaAdmin
     steps:
       - name: Check out code.
         uses: actions/checkout@v3.0.2
@@ -80,7 +79,16 @@ jobs:
         run: |
           curl -X GET "${{ steps.install_keptn.outputs.KEPTN_ENDPOINT }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
 
+      - name: Generate Gitea credentials
+        id: gitea_credentials
+        run: |
+          password=$(date +%s | sha256sum | base64 | head -c 32 ; echo)
+          echo "::add-mask::$password"
+          echo "::set-output name=GITEA_ADMIN_PASSWORD::$password"
+
       - name: Install Gitea
+        env:
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.GITEA_ADMIN_PASSWORD }}
         run: |
           helm repo add gitea-charts https://dl.gitea.io/charts/
           helm repo update
@@ -96,13 +104,15 @@ jobs:
 
       # Install Keptn-Service-Template-Go from downloaded helm chart
       - name: Install Keptn-Service-Template-Go
+        env:
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.GITEA_ADMIN_PASSWORD }}
         run: |
           helm upgrade --install keptn-gitea-provisioner-service \
             ./dist/helm-charts/keptn-gitea-provisioner-service*.tgz \
-            --set admin.create=true \
-            --set admin.username=${GITEA_ADMIN_USERNAME} \
-            --set admin.password=${GITEA_ADMIN_PASSWORD} \
-            --wait --debug
+            --set gitea.admin.create=true \
+            --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+            --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
+            --wait
 
       - name: Run integration tests
         env:
