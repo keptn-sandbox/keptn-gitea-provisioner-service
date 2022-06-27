@@ -1,9 +1,12 @@
 package e2e
 
 import (
+	"code.gitea.io/sdk/gitea"
 	keptnutils "github.com/keptn/kubernetes-utils/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"keptn-sandbox/keptn-gitea-provisioner/pkg/provisioner"
+	"net/http"
 	"testing"
 )
 
@@ -35,13 +38,32 @@ func Test_CreateAndDeleteProject(t *testing.T) {
 	// Create a new Keptn api for the use of the E2E test
 	keptnAPI := NewKeptAPI(readKeptnConnectionDetailsFromEnv())
 
-	err = keptnAPI.CreateProject("e2e-gitea-test-project", []byte(shipyard))
+	// Create the Gitea client from the environment
+	giteaDetails := readGiteaConnectionDetailsFromEnv()
+	client, err := gitea.NewClient(giteaDetails.Endpoint,
+		gitea.SetBasicAuth(giteaDetails.Username, giteaDetails.Password),
+	)
+	require.NoError(t, err, "unable to connect to gitea")
+
+	// Note: while projectName can be chosen freely, the projectUser is dependent on the Keptn namespace
+	projectName := "e2e-gitea-test-project"
+	projectUser := provisioner.DefaultKeptnNamespace
+
+	// Create a repository
+	err = keptnAPI.CreateProject(projectName, []byte(shipyard))
 	require.NoError(t, err)
 
-	// TODO: test if the project exists in gitea
+	// Check if the repository exists in the Gitea upstream server
+	_, r, err := client.GetRepo(projectUser, projectName)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, r.StatusCode)
 
-	err = keptnAPI.DeleteProject("e2e-gitea-test-project")
+	// Delete the repository in Keptn
+	err = keptnAPI.DeleteProject(projectName)
 	require.NoError(t, err)
 
-	// TODO: test if the project has been deleted from gitea
+	// Repository must also be deleted from upstream Gitea server
+	_, r, err = client.GetRepo(projectUser, projectName)
+	require.Error(t, err)
+	require.Equal(t, http.StatusNotFound, r.StatusCode)
 }

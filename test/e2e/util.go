@@ -33,6 +33,22 @@ func readKeptnConnectionDetailsFromEnv() KeptnConnectionDetails {
 	}
 }
 
+// GiteaConnectionDetails contains the endpoint information from the environment for Gitea
+type GiteaConnectionDetails struct {
+	Endpoint string
+	Username string
+	Password string
+}
+
+// readGiteaConnectionDetailsFromEnv parses the environment variables and creates a GiteaConnectionDetails struct
+func readGiteaConnectionDetailsFromEnv() GiteaConnectionDetails {
+	return GiteaConnectionDetails{
+		Endpoint: os.Getenv("GITEA_ENDPOINT"),
+		Username: os.Getenv("GITEA_ADMIN_USERNAME"),
+		Password: os.Getenv("GITEA_ADMIN_PASSWORD"),
+	}
+}
+
 // isE2ETestingAllowed checks if the E2E tests are allowed to run by parsing environment variables
 func isE2ETestingAllowed() bool {
 	boolean, err := strconv.ParseBool(os.Getenv("ENABLE_E2E_TEST"))

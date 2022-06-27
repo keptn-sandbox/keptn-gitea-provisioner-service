@@ -3,6 +3,7 @@ package provisioner
 import (
 	"errors"
 	"fmt"
+	"keptn-sandbox/keptn-gitea-provisioner/pkg/keptn"
 	"net/http"
 
 	"code.gitea.io/sdk/gitea"
@@ -27,11 +28,13 @@ type GiteaClient interface {
 	DeleteRepo(username string, repository string) (*gitea.Response, error)
 	CreateAccessToken(opt gitea.CreateAccessTokenOption) (*gitea.AccessToken, *gitea.Response, error)
 	DeleteAccessToken(value interface{}) (*gitea.Response, error)
+	ListMyRepos(opt gitea.ListReposOptions) ([]*gitea.Repository, *gitea.Response, error)
+	AdminDeleteUser(user string) (*gitea.Response, error)
 }
 
 //go:generate mockgen -destination=fake/gitea_mock.go -package=fake . GiteaClient
 
-// The GiteaProvisioner structure implements the Provisioner interface and provides functionality for creating, deleting
+// The GiteaProvisioner structure implements the GitProvisioner interface and provides functionality for creating, deleting
 // the different resources in a Gitea
 type GiteaProvisioner struct {
 	endpoint        string
@@ -160,7 +163,7 @@ func (h *GiteaProvisioner) CreateToken(namespace string, project string) (string
 func (h *GiteaProvisioner) CreateRepository(namespace string, project string) (string, error) {
 	projectName := h.GetProjectName(project)
 	projectDesc := fmt.Sprintf(
-		"Repository was automatically provisioned by keptn-gitea-Provisioner for project %s",
+		"Repository was automatically provisioned by keptn-gitea-GitProvisioner for project %s",
 		projectName,
 	)
 
@@ -224,6 +227,10 @@ func (h *GiteaProvisioner) GetAccessTokenName(project string) string {
 // DeleteRepository deletes a given repository and all associated resources that where created with that repository
 func (h *GiteaProvisioner) DeleteRepository(namespace string, project string) error {
 
+	if project == "" {
+		return fmt.Errorf("%w: unable to delete project with an empty name", ErrInvalidRequest)
+	}
+
 	username := h.GetUsername(namespace)
 	accessToken := h.GetAccessTokenName(project)
 
@@ -248,16 +255,33 @@ func (h *GiteaProvisioner) DeleteRepository(namespace string, project string) er
 		return fmt.Errorf("unable to delete the access token: ")
 	}
 
-	// TODO: If the user doesn't have any repositories we might want to delete the user
+	// Check if user has no repositories:
+	repos, r, err := userClient.ListMyRepos(gitea.ListReposOptions{})
+	if err != nil {
+		return fmt.Errorf("unable to query all user repositories for cleanup: %s", err)
+	}
+
+	if r.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code %d when listing repositories", r.StatusCode)
+	}
+
+	// Delete the user if no other repositories are found
+	if len(repos) == 0 {
+		_, err := h.client.AdminDeleteUser(username)
+		if err != nil {
+			return fmt.Errorf("unable to delete user %s", username)
+		}
+	}
+
 	return nil
 }
 
 // ProvisionRepository provisions the Gitea repository with the given Keptn namespace and project name, this includes also
 // the creation of needed resources such as users and access tokens.
-func (h *GiteaProvisioner) ProvisionRepository(namespace string, project string) (*ProvisionResponse, error) {
+func (h *GiteaProvisioner) ProvisionRepository(namespace string, project string) (*keptn.ProvisionResponse, error) {
 
 	if project == "" {
-		return nil, fmt.Errorf("unable to create project with an empty name")
+		return nil, fmt.Errorf("%w: unable to create project with an empty name", ErrInvalidRequest)
 	}
 
 	if _, err := h.CreateUser(namespace); err != nil {
@@ -280,7 +304,7 @@ func (h *GiteaProvisioner) ProvisionRepository(namespace string, project string)
 		return nil, fmt.Errorf("unable to create token: %w", err)
 	}
 
-	return &ProvisionResponse{
+	return &keptn.ProvisionResponse{
 		GitRemoteURL: repository,
 		GitToken:     token,
 		GitUser:      username,

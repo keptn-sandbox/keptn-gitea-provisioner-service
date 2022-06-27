@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        keptn-version: ["0.16.0"] # https://github.com/keptn/keptn/releases
+        keptn-version: [ "0.15.1", "0.16.0"] # https://github.com/keptn/keptn/releases
     env:
       GO_VERSION: 1.17
       GO111MODULE: "on"
@@ -84,14 +84,19 @@ jobs:
       - name: Generate Gitea credentials
         id: gitea_credentials
         run: |
-          password=$(date +%s | sha256sum | base64 | head -c 32 ; echo)
+          password=$(date +%s | sha256sum | base64 | head -c 32)
           echo "::add-mask::$password"
           echo "::set-output name=GITEA_ADMIN_PASSWORD::$password"
 
       - name: Install Gitea
+        id: gitea
         env:
-          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.GITEA_ADMIN_PASSWORD }}
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
         run: |
+          export NODE_IP=$(kubectl get nodes -o jsonpath="{.items[0].status.addresses[0].address}")
+          export NODE_PORT=30000
+          export GITEA_ENDPOINT="http://${NODE_IP}:${NODE_PORT}"
+          
           helm repo add gitea-charts https://dl.gitea.io/charts/
           helm repo update
           helm install -n ${GITEA_NAMESPACE} gitea gitea-charts/gitea \
@@ -102,17 +107,24 @@ jobs:
             --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
             --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
             --set gitea.config.server.OFFLINE_MODE=true \
-            --set gitea.config.server.ROOT_URL=http://gitea-http.${GITEA_NAMESPACE}:3000/ \
+            --set gitea.config.server.ROOT_URL=${GITEA_ENDPOINT}/ \
+            --set service.http.type=NodePort \
+            --set service.http.nodePort=${NODE_PORT} \
+            --set service.http.externalTrafficPolicy=Local \
             --wait
+          
+          # Export Gitea connection details
+          echo "::set-output name=GITEA_ENDPOINT::${GITEA_ENDPOINT}"
 
       # Install provisioner service from downloaded helm chart
       - name: Install Provisioner Service
         env:
-          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.GITEA_ADMIN_PASSWORD }}
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
+          GITEA_ENDPOINT: ${{ steps.gitea.outputs.GITEA_ENDPOINT }}
         run: |
           helm upgrade --install keptn-gitea-provisioner-service \
             ./dist/helm-charts/keptn-gitea-provisioner-service*.tgz \
-            --set gitea.endpoint=http://gitea-http.${GITEA_NAMESPACE}:3000/ \
+            --set gitea.endpoint=${GITEA_ENDPOINT} \
             --set gitea.admin.create=true \
             --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
             --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
@@ -132,6 +144,8 @@ jobs:
         env:
           KEPTN_ENDPOINT: ${{ steps.install_keptn.outputs.KEPTN_ENDPOINT }}
           KEPTN_API_TOKEN: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}
+          GITEA_ADMIN_PASSWORD: ${{ steps.gitea_credentials.outputs.GITEA_ADMIN_PASSWORD }}
+          GITEA_ENDPOINT: ${{ steps.gitea.outputs.GITEA_ENDPOINT }}
         shell: bash
         run: |
           gotestsum ./test/e2e/...
@@ -143,13 +157,14 @@ jobs:
           kubectl describe nodes > k8s_debug/k8s_describe_nodes.txt
           kubectl cluster-info dump > k8s_debug/k8s_cluster_info_dump.txt
           kubectl get configmaps,deployments,pods,networkpolicy,serviceaccounts,role,rolebindings,events -o json > k8s_debug/k8s_objects.json
-          kubectl describe deployment/keptn-gitea-provisioner-service > k8s_debug/k8s_describe.txt
           kubectl logs deployment/keptn-gitea-provisioner-service --prefix=true --previous=false --all-containers > k8s_debug/k8s_logs.txt
+          kubectl get statefulsets,configmaps,pods,networkpolicy,serviceaccounts,role,rolebindings,events,services -n ${GITEA_NAMESPACE} -o json > k8s_debug/k8s_objects_gitea.json
+          kubectl logs statefulsets/gitea --prefix=true --previous=false --all-containers -n ${GITEA_NAMESPACE} > k8s_debug/k8s_logs_gitea.txt
 
       # Upload the k8s debug archive, so we can use it for investigating
       - name: Upload k8s debug archive
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: k8s-debug-archive
+          name: k8s-debug-archive-${{matrix.keptn-version}}
           path: k8s_debug/

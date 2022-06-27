@@ -7,13 +7,13 @@
 ![Go Report Card](https://goreportcard.com/badge/github.com/keptn-sandbox/keptn-gitea-provisioner-service)
 
 This repository contains a reference implementation for a Keptn service that is able to auto-provision git repositories
-in Gitea. This is done done by utilizing the extension points for [automatic git provisioning](https://keptn.sh/docs/0.16.x/api/git_provisioning/) in Keptn.
+in Gitea. This is done by utilizing the extension points for [automatic git provisioning](https://keptn.sh/docs/0.16.x/api/git_provisioning/) in Keptn.
 
 ## Compatibility Matrix
 
 | Keptn Version* | [Keptn-Service-Template-Go Docker Image](https://hub.docker.com/r/keptn-sandbox/keptn-gitea-provisioner-service/tags) |
 |:--------------:|:---------------------------------------------------------------------------------------------------------------------:|
-|     0.16.x     |                                  keptn-sandbox/keptn-gitea-provisioner-service:0.1.0                                  |
+|     0.15.1     |                                  keptn-sandbox/keptn-gitea-provisioner-service:0.1.0                                  |
 
 \* This is the Keptn version we aim to be compatible with. Other versions should work too, but there is no guarantee.
 
@@ -34,11 +34,10 @@ instance:
     
   ```
   
-  *Note*: You can re-use existing credentials by omitting the set parameters of the helm installation
+  *Note*: You can re-use existing credentials by omitting the set parameters of the helm installation; For a full list 
+          of options that can be set see the chart [helm documentation](chart/README.md).
 
-
-* If there is no Gitea instance installed, an appropriate instance can be created with the following bash script, otherwise it's sufficient to 
-just create the kubernetes secret.
+* If there is no Gitea instance installed, an appropriate instance can be created with the following bash script:
   ```bash
   #!/bin/bash
   NAMESPACE=default

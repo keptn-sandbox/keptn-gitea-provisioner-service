@@ -66,6 +66,21 @@ func (mr *MockGiteaClientMockRecorder) AdminCreateUser(arg0 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminCreateUser", reflect.TypeOf((*MockGiteaClient)(nil).AdminCreateUser), arg0)
 }
 
+// AdminDeleteUser mocks base method.
+func (m *MockGiteaClient) AdminDeleteUser(arg0 string) (*gitea.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminDeleteUser", arg0)
+	ret0, _ := ret[0].(*gitea.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminDeleteUser indicates an expected call of AdminDeleteUser.
+func (mr *MockGiteaClientMockRecorder) AdminDeleteUser(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDeleteUser", reflect.TypeOf((*MockGiteaClient)(nil).AdminDeleteUser), arg0)
+}
+
 // CreateAccessToken mocks base method.
 func (m *MockGiteaClient) CreateAccessToken(arg0 gitea.CreateAccessTokenOption) (*gitea.AccessToken, *gitea.Response, error) {
 	m.ctrl.T.Helper()
@@ -126,4 +141,20 @@ func (m *MockGiteaClient) GetUserInfo(arg0 string) (*gitea.User, *gitea.Response
 func (mr *MockGiteaClientMockRecorder) GetUserInfo(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserInfo", reflect.TypeOf((*MockGiteaClient)(nil).GetUserInfo), arg0)
+}
+
+// ListMyRepos mocks base method.
+func (m *MockGiteaClient) ListMyRepos(arg0 gitea.ListReposOptions) ([]*gitea.Repository, *gitea.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListMyRepos", arg0)
+	ret0, _ := ret[0].([]*gitea.Repository)
+	ret1, _ := ret[1].(*gitea.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListMyRepos indicates an expected call of ListMyRepos.
+func (mr *MockGiteaClientMockRecorder) ListMyRepos(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMyRepos", reflect.TypeOf((*MockGiteaClient)(nil).ListMyRepos), arg0)
 }

@@ -19,9 +19,10 @@ deploy:
         imageStrategy:
           helm: { }
         overrides:
-          distributor:
-            image:
-              tag: 0.16.0
+          gitea:
+            admin:
+              username: "GiteaAdmin"
+              password: "GiteaAdmin"
           resources:
             limits:
               memory: 512Mi
