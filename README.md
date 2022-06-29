@@ -10,7 +10,7 @@ in Gitea. This is done by utilizing the extension points for [automatic git prov
 
 | Keptn Version* | [Keptn-Service-Template-Go Docker Image](https://hub.docker.com/r/keptn-sandbox/keptn-gitea-provisioner-service/tags) |
 |:--------------:|:---------------------------------------------------------------------------------------------------------------------:|
-|     0.15.1     |                                  keptn-sandbox/keptn-gitea-provisioner-service:1.0.1                                  |
+|     0.15.1     |                                  keptn-sandbox/keptn-gitea-provisioner-service:0.1.0                                  |
 
 \* This is the Keptn version we aim to be compatible with. Other versions should work too, but there is no guarantee.
 
