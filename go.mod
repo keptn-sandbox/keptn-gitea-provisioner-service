@@ -1,6 +1,6 @@
 module keptn-sandbox/keptn-gitea-provisioner
 
-go 1.18
+go 1.17
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1
