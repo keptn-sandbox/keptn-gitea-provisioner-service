@@ -20,14 +20,16 @@ in Gitea. This is done by utilizing the extension points for [automatic git prov
 instance:
   ```bash
   #!/bin/bash
+  VERSION=0.1.0
   NAMESPACE=default
    GITEA_ADMIN_USERNAME=#Define a username for the admin
    GITEA_ADMIN_PASSWORD=#Define a password for the admin
   
-  helm install -n ${NAMESPACE} keptn-gitea-provisioner-service chart/ \
-    --set admin.create=true \
-    --set admin.username=${GITEA_ADMIN_USERNAME} \
-    --set admin.password=${GITEA_ADMIN_PASSWORD}
+  helm install keptn-gitea-provisioner-service https://github.com/keptn-sandbox/keptn-gitea-provisioner-service/releases/download/${VERSION}/keptn-gitea-provisioner-service-${VERSION}.tgz \
+        --set gitea.admin.create=true \
+        --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+        --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
+        --wait
     
   ```
   
