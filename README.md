@@ -20,14 +20,18 @@ in Gitea. This is done by utilizing the extension points for [automatic git prov
 instance:
   ```bash
   #!/bin/bash
+  VERSION=0.1.0
   NAMESPACE=default
+  GITEA_ENDPOINT="http://gitea-http.${NAMESPACE}:3000/"
    GITEA_ADMIN_USERNAME=#Define a username for the admin
    GITEA_ADMIN_PASSWORD=#Define a password for the admin
   
-  helm install -n ${NAMESPACE} keptn-gitea-provisioner-service chart/ \
-    --set admin.create=true \
-    --set admin.username=${GITEA_ADMIN_USERNAME} \
-    --set admin.password=${GITEA_ADMIN_PASSWORD}
+  helm install keptn-gitea-provisioner-service https://github.com/keptn-sandbox/keptn-gitea-provisioner-service/releases/download/${VERSION}/keptn-gitea-provisioner-service-${VERSION}.tgz \
+        --set gitea.admin.create=true \
+        --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
+        --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
+        --set gitea.endpoint=${GITEA_ENDPOINT} \
+        --wait
     
   ```
   
@@ -37,7 +41,7 @@ instance:
 * If there is no Gitea instance installed, an appropriate instance can be created with the following bash script:
   ```bash
   #!/bin/bash
-  NAMESPACE=default
+  NAMESPACE=default #Should be configured to match the GITEA_ENDPOINT environment variable when installing the provisioner
   
   # Add the gitea helm charts and install gitea to the cluster
   helm repo add gitea-charts https://dl.gitea.io/charts/
@@ -58,7 +62,7 @@ instance:
   #!/bin/bash
   NAMESPACE=default
   
-  helm upgrade -n keptn keptn \
+  helm upgrade -n keptn keptn keptn/keptn \
     --set "control-plane.features.automaticProvisioningURL=http://keptn-gitea-provisioner-service.${NAMESPACE}"
   ```
 
