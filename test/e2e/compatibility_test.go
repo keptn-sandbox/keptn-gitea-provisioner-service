@@ -2,7 +2,7 @@ package e2e
 
 import (
 	"code.gitea.io/sdk/gitea"
-	keptnutils "github.com/keptn/kubernetes-utils/pkg"
+	"github.com/keptn/go-utils/pkg/common/kubeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"keptn-sandbox/keptn-gitea-provisioner/pkg/provisioner"
@@ -31,7 +31,7 @@ func Test_CreateAndDeleteProject(t *testing.T) {
 	}
 
 	// Just test if we can connect to the cluster
-	clientset, err := keptnutils.GetClientset(false)
+	clientset, err := kubeutils.GetClientSet(false)
 	require.NoError(t, err)
 	assert.NotNil(t, clientset)
 

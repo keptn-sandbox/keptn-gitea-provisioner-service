@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/keptn/go-utils/pkg/api/models"
-	keptnutils "github.com/keptn/kubernetes-utils/pkg"
+	"github.com/keptn/go-utils/pkg/common/kubeutils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -168,7 +168,7 @@ type testEnvironment struct {
 // the desired events or continue to customize the project
 func setupE2ETTestEnvironment(t *testing.T, eventJSONFilePath string, shipyardPath string) testEnvironment {
 	// Just test if we can connect to the cluster
-	clientset, err := keptnutils.GetClientset(false)
+	clientset, err := kubeutils.GetClientSet(false)
 	require.NoError(t, err)
 	assert.NotNil(t, clientset)
 
