@@ -23,8 +23,8 @@ instance:
   VERSION=0.1.0
   NAMESPACE=default
   GITEA_ENDPOINT="http://gitea-http.${NAMESPACE}:3000/"
-   GITEA_ADMIN_USERNAME=#Define a username for the admin
-   GITEA_ADMIN_PASSWORD=#Define a password for the admin
+  GITEA_ADMIN_USERNAME=#Define a username for the admin
+  GITEA_ADMIN_PASSWORD=#Define a password for the admin
   
   helm install keptn-gitea-provisioner-service https://github.com/keptn-sandbox/keptn-gitea-provisioner-service/releases/download/${VERSION}/keptn-gitea-provisioner-service-${VERSION}.tgz \
         --set gitea.admin.create=true \
@@ -32,7 +32,6 @@ instance:
         --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
         --set gitea.endpoint=${GITEA_ENDPOINT} \
         --wait
-    
   ```
   
   *Note*: You can re-use existing credentials by omitting the set parameters of the helm installation; For a full list 
@@ -57,11 +56,16 @@ instance:
       --set gitea.config.server.ROOT_URL=http://gitea-http.${NAMESPACE}:3000/
   ```
 
-* Keptn must be configured to use the keptn-gitea-provisioner-service to automatically provision git repositories:
+* Keptn must be configured to use the keptn-gitea-provisioner-service to automatically provision git repositories. The flag is different for Keptn version 0.16 and version 0.17 and onwards:
   ```bash
   #!/bin/bash
   NAMESPACE=default
   
+  # Keptn 0.17
+  helm upgrade -n keptn keptn keptn/keptn \
+    --set "control-plane.features.automaticProvisioning.serviceURL=http://keptn-gitea-provisioner-service.${NAMESPACE}"
+  
+  # Keptn 0.16
   helm upgrade -n keptn keptn keptn/keptn \
     --set "control-plane.features.automaticProvisioningURL=http://keptn-gitea-provisioner-service.${NAMESPACE}"
   ```

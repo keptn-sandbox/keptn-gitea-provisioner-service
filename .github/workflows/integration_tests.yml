@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        keptn-version: [ "0.15.1", "0.16.0"] # https://github.com/keptn/keptn/releases
+        keptn-version: [ "0.15.1", "0.16.0", "0.17.0"] # https://github.com/keptn/keptn/releases
     env:
       GO_VERSION: 1.17
       GO111MODULE: "on"
@@ -70,11 +70,18 @@ jobs:
 
       - name: Install Keptn
         id: install_keptn
-        uses: keptn-sandbox/action-install-keptn@v1.0.0
+        uses: keptn-sandbox/action-install-keptn@v2.0.0
         timeout-minutes: 10
         with:
           KEPTN_VERSION: ${{ matrix.keptn-version }}
-          KEPTN_INSTALL_PARAMETERS: -v --endpoint-service-type=LoadBalancer
+          HELM_VALUES: |
+            control-plane:
+              apiGatewayNginx:
+                type: LoadBalancer
+              features:
+                automaticProvisioningURL: http://keptn-gitea-provisioner-service.default # Keptn 0.16 compatability 
+                automaticProvisioning:
+                  serviceURL: http://keptn-gitea-provisioner-service.default
           KUBECONFIG: ${{ env.KUBECONFIG }}
 
       - name: Test connection to keptn
@@ -129,16 +136,6 @@ jobs:
             --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
             --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
             --wait
-
-      - name: Use Provisioner Service in Keptn
-        run: |
-          # get keptn helm chart
-          helm repo add keptn https://charts.keptn.sh
-          helm repo update
-  
-          # reconfigure Keptn installation (Todo: This should eventually be part of the  keptn-sandbox/action-install-keptn action)
-          helm upgrade --install keptn keptn/keptn -n keptn --create-namespace --version=$KEPTN_VERSION --reuse-values \
-            --set=control-plane.features.automaticProvisioningURL=http://keptn-gitea-provisioner-service.default
 
       - name: Run integration tests
         env:
