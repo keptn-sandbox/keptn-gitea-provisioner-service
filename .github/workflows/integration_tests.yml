@@ -86,7 +86,8 @@ jobs:
 
       - name: Test connection to keptn
         run: |
-          curl -X GET "${{ steps.install_keptn.outputs.KEPTN_ENDPOINT }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
+          curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
+      
 
       - name: Generate Gitea credentials
         id: gitea_credentials
