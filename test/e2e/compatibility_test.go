@@ -2,8 +2,6 @@ package e2e
 
 import (
 	"code.gitea.io/sdk/gitea"
-	keptnutils "github.com/keptn/kubernetes-utils/pkg"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"keptn-sandbox/keptn-gitea-provisioner/pkg/provisioner"
 	"net/http"
@@ -29,11 +27,6 @@ func Test_CreateAndDeleteProject(t *testing.T) {
 	if !isE2ETestingAllowed() {
 		t.Skip("Skipping Test_ActionTriggered, not allowed by environment")
 	}
-
-	// Just test if we can connect to the cluster
-	clientset, err := keptnutils.GetClientset(false)
-	require.NoError(t, err)
-	assert.NotNil(t, clientset)
 
 	// Create a new Keptn api for the use of the E2E test
 	keptnAPI := NewKeptAPI(readKeptnConnectionDetailsFromEnv())
