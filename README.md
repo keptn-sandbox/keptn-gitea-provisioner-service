@@ -3,14 +3,13 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/keptn-sandbox/keptn-gitea-provisioner-service)
 ![Go Report Card](https://goreportcard.com/badge/github.com/keptn-sandbox/keptn-gitea-provisioner-service)
 
-This repository contains a reference implementation for a Keptn service that is able to auto-provision git repositories
-in Gitea. This is done by utilizing the extension points for [automatic git provisioning](https://keptn.sh/docs/0.16.x/api/git_provisioning/) in Keptn.
+This repository contains a reference implementation for a [Keptn extension which auto-provisions git upstream repositories](https://keptn.sh/docs/0.16.x/api/git_provisioning/) in Gitea.
 
 ## Compatibility Matrix
 
 | Keptn Version* | [Keptn-Service-Template-Go Docker Image](https://hub.docker.com/r/keptn-sandbox/keptn-gitea-provisioner-service/tags) |
 |:--------------:|:---------------------------------------------------------------------------------------------------------------------:|
-|     0.15.1     |                                  keptn-sandbox/keptn-gitea-provisioner-service:0.1.0                                  |
+|   0.15, 0.16   |                                  keptn-sandbox/keptn-gitea-provisioner-service:0.1.0                                  |
 
 \* This is the Keptn version we aim to be compatible with. Other versions should work too, but there is no guarantee.
 
@@ -38,7 +37,7 @@ instance:
   *Note*: You can re-use existing credentials by omitting the set parameters of the helm installation; For a full list 
           of options that can be set see the chart [helm documentation](chart/README.md).
 
-* If there is no Gitea instance installed, an appropriate instance can be created with the following bash script:
+* In case you need a simple Gitea instance, you can create it with following bash script:
   ```bash
   #!/bin/bash
   NAMESPACE=default #Should be configured to match the GITEA_ENDPOINT environment variable when installing the provisioner
@@ -97,6 +96,10 @@ To delete a deployed *keptn-gitea-provisioner-service*, use the file `deploy/*.y
 ```console
 helm uninstall -n keptn keptn-gitea-provisioner-service
 ```
+
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## License
 
