@@ -10,6 +10,7 @@ This repository contains a reference implementation for a [Keptn extension which
 | Keptn Version* | [Keptn-Service-Template-Go Docker Image](https://hub.docker.com/r/keptn-sandbox/keptn-gitea-provisioner-service/tags) |
 |:--------------:|:---------------------------------------------------------------------------------------------------------------------:|
 |   0.15, 0.16   |                                  keptn-sandbox/keptn-gitea-provisioner-service:0.1.0                                  |
+|     0.17.0     |                                  keptn-sandbox/keptn-gitea-provisioner-service:0.1.1                                  |
 
 \* This is the Keptn version we aim to be compatible with. Other versions should work too, but there is no guarantee.
 
@@ -31,7 +32,6 @@ instance:
         --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
         --set gitea.endpoint=${GITEA_ENDPOINT} \
         --wait
-    
   ```
   
   *Note*: You can re-use existing credentials by omitting the set parameters of the helm installation; For a full list 
@@ -56,11 +56,16 @@ instance:
       --set gitea.config.server.ROOT_URL=http://gitea-http.${NAMESPACE}:3000/
   ```
 
-* Keptn must be configured to use the keptn-gitea-provisioner-service to automatically provision git repositories:
+* Keptn must be configured to use the keptn-gitea-provisioner-service to automatically provision git repositories. The flag is different for Keptn version 0.16 and version 0.17 and onwards:
   ```bash
   #!/bin/bash
   NAMESPACE=default
   
+  # Keptn 0.17
+  helm upgrade -n keptn keptn keptn/keptn \
+    --set "features.automaticProvisioning.serviceURL=http://keptn-gitea-provisioner-service.${NAMESPACE}"
+  
+  # Keptn 0.16
   helm upgrade -n keptn keptn keptn/keptn \
     --set "control-plane.features.automaticProvisioningURL=http://keptn-gitea-provisioner-service.${NAMESPACE}"
   ```
