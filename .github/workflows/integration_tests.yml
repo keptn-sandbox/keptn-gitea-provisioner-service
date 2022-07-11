@@ -68,27 +68,6 @@ jobs:
           done;
           echo "K3s ready!!!"
 
-      - name: Install Keptn
-        id: install_keptn
-        uses: keptn-sandbox/action-install-keptn@v2.0.0
-        timeout-minutes: 10
-        with:
-          KEPTN_VERSION: ${{ matrix.keptn-version }}
-          HELM_VALUES: |
-            control-plane:
-              apiGatewayNginx:
-                type: LoadBalancer
-              features:
-                automaticProvisioningURL: http://keptn-gitea-provisioner-service.default # Keptn 0.16 compatability 
-                automaticProvisioning:
-                  serviceURL: http://keptn-gitea-provisioner-service.default
-          KUBECONFIG: ${{ env.KUBECONFIG }}
-
-      - name: Test connection to keptn
-        run: |
-          curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
-      
-
       - name: Generate Gitea credentials
         id: gitea_credentials
         run: |
@@ -137,6 +116,31 @@ jobs:
             --set gitea.admin.username=${GITEA_ADMIN_USERNAME} \
             --set gitea.admin.password=${GITEA_ADMIN_PASSWORD} \
             --wait
+
+      - name: Install Keptn
+        id: install_keptn
+        uses: keptn-sandbox/action-install-keptn@v2.0.0
+        timeout-minutes: 10
+        with:
+          KEPTN_VERSION: ${{ matrix.keptn-version }}
+          HELM_VALUES: |
+            # Keptn 0.17 and newer
+            apiGatewayNginx:
+              type: LoadBalancer
+            features:
+              automaticProvisioning:
+                serviceURL: http://keptn-gitea-provisioner-service.default
+            # Keptn 0.16 compatibility
+            control-plane:
+              apiGatewayNginx:
+                type: LoadBalancer
+              features:
+                automaticProvisioningURL: http://keptn-gitea-provisioner-service.default
+          KUBECONFIG: ${{ env.KUBECONFIG }}
+
+      - name: Test connection to keptn
+        run: |
+          curl -X GET "${{ steps.install_keptn.outputs.KEPTN_API_URL }}/v1/metadata" -H  "accept: application/json" -H  "x-token: ${{ steps.install_keptn.outputs.KEPTN_API_TOKEN }}"
 
       - name: Run integration tests
         env:

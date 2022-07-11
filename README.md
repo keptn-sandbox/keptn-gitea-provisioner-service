@@ -11,6 +11,7 @@ in Gitea. This is done by utilizing the extension points for [automatic git prov
 | Keptn Version* | [Keptn-Service-Template-Go Docker Image](https://hub.docker.com/r/keptn-sandbox/keptn-gitea-provisioner-service/tags) |
 |:--------------:|:---------------------------------------------------------------------------------------------------------------------:|
 |     0.15.1     |                                  keptn-sandbox/keptn-gitea-provisioner-service:0.1.0                                  |
+|     0.17.0     |                                  keptn-sandbox/keptn-gitea-provisioner-service:0.1.1                                  |
 
 \* This is the Keptn version we aim to be compatible with. Other versions should work too, but there is no guarantee.
 
@@ -23,8 +24,8 @@ instance:
   VERSION=0.1.0
   NAMESPACE=default
   GITEA_ENDPOINT="http://gitea-http.${NAMESPACE}:3000/"
-  GITEA_ADMIN_USERNAME=#Define a username for the admin
-  GITEA_ADMIN_PASSWORD=#Define a password for the admin
+   GITEA_ADMIN_USERNAME=#Define a username for the admin
+   GITEA_ADMIN_PASSWORD=#Define a password for the admin
   
   helm install keptn-gitea-provisioner-service https://github.com/keptn-sandbox/keptn-gitea-provisioner-service/releases/download/${VERSION}/keptn-gitea-provisioner-service-${VERSION}.tgz \
         --set gitea.admin.create=true \
@@ -63,7 +64,7 @@ instance:
   
   # Keptn 0.17
   helm upgrade -n keptn keptn keptn/keptn \
-    --set "control-plane.features.automaticProvisioning.serviceURL=http://keptn-gitea-provisioner-service.${NAMESPACE}"
+    --set "features.automaticProvisioning.serviceURL=http://keptn-gitea-provisioner-service.${NAMESPACE}"
   
   # Keptn 0.16
   helm upgrade -n keptn keptn keptn/keptn \
